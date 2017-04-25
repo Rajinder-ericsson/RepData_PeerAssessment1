@@ -1,0 +1,195 @@
+---
+title: "Daily_Activity"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+Taking data into R
+
+```{r}
+library(ggplot2)
+library(dplR)
+Activity_data<- read.csv("activity.csv")
+
+
+```
+
+Processing of data
+
+
+
+```{R Echo =TRUE}
+Activity_data$day<- weekdays(as.Date(Activity_data$date))
+
+Activity_data$datetime<-as.POSIXct(Activity_data$day, format = "%y-%m-%d")
+Clean_data<- Activity_data[!is.na(Activity_data)]
+head(Clean_data)
+
+```
+
+Steps taken in a day and the Histogram
+======================================
+
+```{r ECHO= TRUE}
+Sumtable<- aggregate(Activity_data$steps ~ Activity_data$date, FUN = sum)
+colnames(Sumtable)<- c("date","steps")
+head(Sumtable)
+hist(Sumtable$steps, breaks = 5,xlab = "Steps",main = "Agregate number of steps per day")
+
+#Head(Sumtable)
+
+```
+
+Mean and Median 
+
+```{r}
+as.integer(mean(Sumtable$steps))
+as.integer(median(Sumtable$steps))
+
+```
+
+What is the daily activity pattern
+==================================
+
+```{r}
+library(plyr)
+library(ggplot2)
+clean<- Activity_data[!is.na(Activity_data$steps),]
+head(clean)
+intervalTable <- ddply(clean, .(interval), summarize, Avg = mean(steps))
+
+#Plotting graphs
+p <- ggplot(intervalTable, aes(x=interval, y=Avg), xlab = "Interval", ylab="Average Number of Steps")
+p + geom_line()+xlab("Interval")+ylab("Average Number of Steps")+ggtitle("Average Number of Steps per Interval")
+
+#maximum steps 
+
+max_steps<- max(intervalTable$Avg)
+intervalTable[intervalTable$steps== max_steps,]
+```
+
+calculating missing  values:
+=============================
+
+```{r}
+nrow(Activity_data[is.na(Activity_data$steps),])
+
+avgtable<- ddply(clean, .(interval, day), summarize, Avg= mean(steps))
+na_values<- Activity_data[is.na(Activity_data$steps),]
+
+new_data<- merge(avgtable, na_values, by= c("interval","day"))
+head(new_data,1)
+head(clean,1)
+## Reorder the new substituded data in the same format as clean data set
+newdata2<- new_data[,c(4,5,1,2,5)]
+colnames(newdata2)<- c("steps", "date", "interval", "day", "datetime")
+head(newdata2)
+head(clean)
+mergdata<- rbind(newdata2, clean)
+
+sumtable2<- aggregate(mergdata$steps~ mergdata$date, FUN = sum)
+colnames(sumtable2)<- c("date", "steps")
+as.integer(mean(sumtable2$steps))
+as.integer(median(sumtable2$steps))
+head(sumtable2)
+head(Sumtable)
+
+hist(sumtable2$steps, breaks = 5, xlab = "steps", main = "Total number of steps NA fixed", col = "black")
+hist(Sumtable$steps, breaks = 5, xlab="steps", main = "Total muner of steps NA fixed", col="Grey", add=T)
+legend("topright", c("with NA", "without NA"), fill= c("black","grey"))
+
+dim(Sumtable)
+    dim(sumtable2)
+
+```
+
+Are there differences in activity patterns between weekdays and weekends?
+=========================================================================
+
+```{r}
+head(mergdata)
+
+mergdata$daycategory<- ifelse(mergdata$day %in% c("Saturday","Sunday"),"weekend","Weekday")
+library(lattice)
+Intertable2<- ddply(mergdata, .(interval, daycategory), Avg = mean(steps))
+
+head(Intertable2,20)
+xyplot(Intertable2$Avg~interval|Intertable2$daycategory, data=Intertable2, type="l",layout = c(1,2),main="Average Steps per Interval Based on Type of Day",ylab="Average Number of  Steps",xlab="Interval")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
